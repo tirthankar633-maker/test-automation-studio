@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Case Automation Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#fff;--bg2:#f5f5f3;--text:#1a1a1a;--text2:#666;--border:rgba(0,0,0,0.12);
+--pass-bg:#EAF3DE;--pass:#3B6D11;--fail-bg:#FCEBEB;--fail:#A32D2D;
+--blue-bg:#E6F1FB;--blue:#185FA5;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--text);min-height:100vh;}
+header{background:var(--bg);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;gap:12px;}
+header h1{font-size:20px;font-weight:600;}
+.badge{font-size:11px;background:var(--blue-bg);color:var(--blue);padding:2px 10px;border-radius:20px;}
+.container{max-width:980px;margin:0 auto;padding:1.5rem;}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+.tab{padding:8px 16px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;}
+.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
+.panel{display:none;}.panel.active{display:block;}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;}
+.card-title{font-size:14px;font-weight:600;margin-bottom:0.75rem;display:flex;align-items:center;gap:8px;}
+.card-title .new-tag{font-size:10px;padding:2px 7px;border-radius:10px;background:#E1F5EE;color:#085041;font-weight:500;}
+textarea,select,input[type=text]{width:100%;border:1px solid var(--border);border-radius:8px;padding:0.7rem;font-size:13px;background:var(--bg);color:var(--text);font-family:inherit;outline:none;}
+textarea{resize:vertical;}
+select,input[type=text]{padding:6px 10px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem;}
+.metric{background:var(--bg2);border-radius:8px;padding:1rem;}
+.metric .lbl{font-size:12px;color:var(--text2);margin-bottom:4px;}
+.metric .val{font-size:24px;font-weight:600;}
+button{border:1px solid var(--border);border-radius:8px;padding:7px 16px;font-size:13px;cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit;transition:background 0.15s;}
+button:hover{background:var(--bg2);}
+button.primary{background:var(--text);color:var(--bg);border-color:var(--text);}
+button.primary:hover{opacity:0.85;}
+button.primary:disabled{opacity:0.45;cursor:not-allowed;}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.loader{display:none;height:3px;background:var(--bg2);border-radius:2px;overflow:hidden;margin:1rem 0;}
+.loader.show{display:block;}
+.loader-bar{height:100%;background:var(--text);border-radius:2px;animation:ld 1.4s ease-in-out infinite;}
+@keyframes ld{0%{width:0;margin-left:0}50%{width:55%;margin-left:22%}100%{width:0;margin-left:100%}}
+
+/* Upload zone */
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s;margin-bottom:0.75rem;}
+.upload-zone:hover,.upload-zone.drag{border-color:#378ADD;background:#f0f7ff;}
+.upload-zone input{display:none;}
+.upload-icon{font-size:28px;margin-bottom:6px;}
+.upload-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px;}
+.upload-sub{font-size:12px;color:var(--text2);}
+.upload-formats{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;}
+.fmt-tag{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);}
+.file-info{display:none;align-items:center;gap:10px;padding:8px 12px;background:var(--blue-bg);border-radius:8px;margin-bottom:0.75rem;border:1px solid #B5D4F4;}
+.file-info.show{display:flex;}
+.file-name{font-size:13px;font-weight:500;color:var(--blue);flex:1;}
+.file-size{font-size:12px;color:var(--text2);}
+.file-remove{font-size:11px;cursor:pointer;color:var(--text2);border:none;background:none;padding:0;}
+.file-remove:hover{color:var(--fail);}
+.preview-table-wrap{max-height:160px;overflow:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:0.75rem;}
+table.preview-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+table.preview-tbl th{padding:6px 10px;background:var(--bg2);border-bottom:1px solid var(--border);text-align:left;font-weight:600;color:var(--text2);white-space:nowrap;}
+table.preview-tbl td{padding:5px 10px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;}
+table.preview-tbl tr:last-child td{border-bottom:none;}
+.data-count{font-size:12px;color:var(--text2);margin-bottom:6px;}
+
+/* Divider */
+.or-divider{display:flex;align-items:center;gap:10px;margin:0.75rem 0;color:var(--text2);font-size:12px;}
+.or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* Custom requirements */
+.custom-req-area{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:0.75rem;}
+.custom-req-header{padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text2);display:flex;align-items:center;justify-content:space-between;}
+.custom-req-header span{font-weight:400;color:#999;font-size:11px;}
+.custom-req-body{padding:10px;}
+.custom-req-body textarea{min-height:90px;font-size:13px;border:none;padding:0;resize:vertical;}
+.custom-req-body textarea:focus{outline:none;}
+.req-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.req-chip{font-size:11px;padding:3px 10px;border-radius:20px;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:var(--bg2);transition:all 0.12s;}
+.req-chip:hover{color:var(--text);border-color:rgba(0,0,0,0.25);}
+
+/* Results */
+.tc{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:0.6rem;}
+.tc-header{display:flex;gap:10px;align-items:flex-start;}
+.tc-id{font-size:11px;color:var(--text2);background:var(--bg2);padding:2px 6px;border-radius:4px;font-family:monospace;flex-shrink:0;margin-top:2px;}
+.tc-title{font-size:14px;font-weight:500;flex:1;}
+.tc-type{font-size:11px;padding:2px 8px;border-radius:20px;flex-shrink:0;margin-top:2px;}
+.type-functional{background:#E6F1FB;color:#185FA5;}
+.type-edge{background:#FAEEDA;color:#633806;}
+.type-negative{background:#FCEBEB;color:#791F1F;}
+.type-integration{background:#E1F5EE;color:#085041;}
+.type-performance{background:#EEEDFE;color:#3C3489;}
+.tc-meta{display:flex;gap:12px;align-items:center;margin-top:8px;flex-wrap:wrap;}
+.tc-body{display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;}
+.tc-body.open{display:block;}
+.tc-lbl{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;}
+ol.steps{font-size:13px;padding-left:1rem;line-height:1.8;}
+.expected{font-size:13px;background:var(--bg2);padding:6px 10px;border-radius:8px;margin-top:10px;}
+.status-badge{font-size:12px;padding:3px 10px;border-radius:20px;}
+.status-pending{background:var(--bg2);color:var(--text2);}
+.status-pass{background:var(--pass-bg);color:var(--pass);}
+.status-fail{background:var(--fail-bg);color:var(--fail);}
+.pri-high{color:#E24B4A;font-size:12px;}
+.pri-medium{color:#BA7517;font-size:12px;}
+.pri-low{color:#639922;font-size:12px;}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;align-items:center;}
+.chip{font-size:12px;padding:4px 12px;border-radius:20px;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:var(--bg);}
+.chip.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+.empty{text-align:center;padding:3rem;color:var(--text2);}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.bar-lbl{font-size:12px;color:var(--text2);width:95px;flex-shrink:0;}
+.bar-track{flex:1;height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;}
+.sample-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.schip{font-size:12px;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:var(--bg2);}
+.schip:hover{color:var(--text);}
+.coverage-map{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.cov-pill{font-size:12px;padding:4px 10px;border-radius:8px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Test Case Automation Studio</h1>
+  <span class="badge">Powered by Claude AI</span>
+</header>
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('generate')">Generate</button>
+    <button class="tab" onclick="switchTab('results')">Results <span id="rc" style="font-size:11px;background:#f0f0ee;padding:1px 6px;border-radius:10px;margin-left:4px;">0</span></button>
+    <button class="tab" onclick="switchTab('dashboard')">Dashboard</button>
+  </div>
+
+  <!-- GENERATE -->
+  <div id="p-generate" class="panel active">
+    <div class="card">
+      <div class="card-title">Dataset input <span class="new-tag">updated</span></div>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.json,.txt,.md,.docx" onchange="handleFile(this.files[0])">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Click to upload or drag & drop your dataset</div>
+        <div class="upload-sub">Supported formats:</div>
+        <div class="upload-formats">
+          <span class="fmt-tag">CSV</span>
+          <span class="fmt-tag">Excel .xlsx</span>
+          <span class="fmt-tag">Excel .xls</span>
+          <span class="fmt-tag">JSON</span>
+          <span class="fmt-tag">TXT</span>
+          <span class="fmt-tag">.md</span>
+        </div>
+      </div>
+
+      <!-- File info bar -->
+      <div class="file-info" id="file-info">
+        <span style="font-size:16px;">📄</span>
+        <span class="file-name" id="file-name-label">—</span>
+        <span class="file-size" id="file-size-label"></span>
+        <button class="file-remove" onclick="clearFile()">✕ Remove</button>
+      </div>
+
+      <!-- Data preview table -->
+      <div id="preview-table-section" style="display:none;">
+        <div class="data-count" id="data-count"></div>
+        <div class="preview-table-wrap" id="preview-table-wrap"></div>
+      </div>
+
+      <div class="or-divider">or type / paste manually</div>
+
+      <textarea id="inp" rows="5" placeholder="Paste user stories, feature specs, or requirements here..."></textarea>
+      <div class="sample-chips">
+        <span style="font-size:12px;color:#999;align-self:center;">Samples:</span>
+        <span class="schip" onclick="ls('ecom')">E-commerce</span>
+        <span class="schip" onclick="ls('auth')">Auth system</span>
+        <span class="schip" onclick="ls('api')">REST API</span>
+      </div>
+    </div>
+
+    <!-- Config -->
+    <div class="card">
+      <div class="card-title">Configuration</div>
+      <div class="grid2">
+        <div>
+          <div style="font-size:12px;color:#999;margin-bottom:8px;">Test types</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label style="font-size:13px;cursor:pointer;display:flex;gap:8px;"><input type="checkbox" id="c1" checked> Functional</label>
+            <label style="font-size:13px;cursor:pointer;display:flex;gap:8px;"><input type="checkbox" id="c2" checked> Edge cases</label>
+            <label style="font-size:13px;cursor:pointer;display:flex;gap:8px;"><input type="checkbox" id="c3" checked> Negative</label>
+            <label style="font-size:13px;cursor:pointer;display:flex;gap:8px;"><input type="checkbox" id="c4"> Integration</label>
+            <label style="font-size:13px;cursor:pointer;display:flex;gap:8px;"><input type="checkbox" id="c5"> Performance</label>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#999;margin-bottom:6px;">Priority mode</div>
+          <select id="pri" style="margin-bottom:10px;">
+            <option>Balanced</option>
+            <option>Focus on high priority</option>
+            <option>Risk-based</option>
+          </select>
+          <div style="font-size:12px;color:#999;margin-bottom:6px;">Output format</div>
+          <select id="fmt">
+            <option>Detailed (steps + expected)</option>
+            <option>Gherkin (Given/When/Then)</option>
+            <option>Minimal</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Custom requirements -->
+      <div class="custom-req-area">
+        <div class="custom-req-header">
+          Custom requirements <span class="new-tag" style="background:#E1F5EE;color:#085041;font-size:10px;padding:2px 7px;border-radius:10px;margin-left:6px;">new</span>
+          <span>Add anything not covered by the options above</span>
+        </div>
+        <div class="custom-req-body">
+          <textarea id="custom-req" placeholder="e.g. Focus only on mobile browser scenarios. Generate test cases in Spanish. Include accessibility (ARIA) checks. Assume the user is not logged in for all tests. Prioritise payment failure scenarios..."></textarea>
+          <div class="req-chips">
+            <span style="font-size:11px;color:#999;align-self:center;">Quick add:</span>
+            <span class="req-chip" onclick="addChip('Focus on mobile browser scenarios')">Mobile browser</span>
+            <span class="req-chip" onclick="addChip('Include accessibility (ARIA/WCAG) checks')">Accessibility</span>
+            <span class="req-chip" onclick="addChip('Assume user is not logged in for all tests')">Logged-out user</span>
+            <span class="req-chip" onclick="addChip('Focus on payment failure and error recovery scenarios')">Payment failures</span>
+            <span class="req-chip" onclick="addChip('Generate test cases using Gherkin BDD format only')">BDD / Gherkin</span>
+            <span class="req-chip" onclick="addChip('Include data validation and boundary value tests')">Boundary values</span>
+            <span class="req-chip" onclick="addChip('Simulate slow network and timeout conditions')">Slow network</span>
+            <span class="req-chip" onclick="addChip('Cover GDPR and data privacy compliance checks')">GDPR checks</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="loader" id="loader"><div class="loader-bar"></div></div>
+    <div class="row" style="margin-top:0.5rem;">
+      <button class="primary" id="gbtn" onclick="gen()">Generate test cases</button>
+      <button onclick="clearAll()" style="font-size:12px;padding:6px 12px;">Clear all</button>
+      <span id="gstat" style="font-size:12px;color:#999;margin-left:auto;"></span>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="p-results" class="panel">
+    <div id="empty-r" class="empty"><p style="font-size:15px;font-weight:500;color:#333;margin-bottom:6px;">No test cases yet</p><p>Upload a dataset or paste requirements, then generate.</p></div>
+    <div id="results-c" style="display:none;">
+      <div class="filter-row">
+        <span class="chip active" onclick="ft('all',this)">All</span>
+        <span class="chip" onclick="ft('functional',this)">Functional</span>
+        <span class="chip" onclick="ft('edge',this)">Edge</span>
+        <span class="chip" onclick="ft('negative',this)">Negative</span>
+        <span class="chip" onclick="ft('integration',this)">Integration</span>
+        <span class="chip" onclick="ft('performance',this)">Performance</span>
+        <input type="text" id="srch" placeholder="Search..." style="margin-left:auto;width:150px;" oninput="sr(this.value)">
+      </div>
+      <div class="row" style="justify-content:flex-end;margin-bottom:1rem;">
+        <button onclick="exportCSV()" style="font-size:12px;padding:5px 12px;">Export CSV</button>
+        <button onclick="exportJSON()" style="font-size:12px;padding:5px 12px;">Export JSON</button>
+        <button onclick="markAll('pass')" style="font-size:12px;padding:5px 12px;">Mark all pass</button>
+        <button onclick="clearAll()" style="font-size:12px;padding:5px 12px;color:#A32D2D;border-color:#F09595;">Clear all</button>
+      </div>
+      <div id="tlist"></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="p-dashboard" class="panel">
+    <div id="empty-d" class="empty"><p>Generate test cases first to see analytics.</p></div>
+    <div id="dash-c" style="display:none;">
+      <div class="grid4">
+        <div class="metric"><div class="lbl">Total</div><div class="val" id="d-tot">0</div></div>
+        <div class="metric"><div class="lbl">Passed</div><div class="val" style="color:#3B6D11" id="d-pass">0</div></div>
+        <div class="metric"><div class="lbl">Failed</div><div class="val" style="color:#E24B4A" id="d-fail">0</div></div>
+        <div class="metric"><div class="lbl">Est. coverage</div><div class="val" id="d-cov">—</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-title">By type</div><div id="type-chart"></div></div>
+        <div class="card"><div class="card-title">By priority</div><div id="pri-chart"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Requirement coverage</div>
+        <div class="coverage-map" id="cov-map"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAMPLES={
+  ecom:`User Story 1: As a guest, I want to add items to cart so I can buy later.
+User Story 2: As a user, I want to apply a discount coupon at checkout.
+User Story 3: As a user, I want to pay via credit card or UPI.
+User Story 4: As a user, I want an order confirmation email after purchase.
+User Story 5: As an admin, I want to mark orders as shipped with a tracking number.`,
+  auth:`Feature: Authentication
+- Email/password login with session management
+- OAuth via Google and GitHub
+- Password reset via OTP (expires 10 min)
+- Account lockout after 5 failed attempts
+- Remember me (30-day session)
+- Logout from single or all devices`,
+  api:`API: User Management
+POST /api/users (name, email, role)
+GET /api/users/:id (auth required)
+PUT /api/users/:id (partial updates)
+DELETE /api/users/:id (admin only)
+GET /api/users?page=1&limit=20
+Rate limit: 100 req/min per IP`
+};
+
+let tests=[],flt='all',q='',parsedFileData=null;
+function ls(k){document.getElementById('inp').value=SAMPLES[k];}
+function switchTab(n){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['generate','results','dashboard'][i]===n));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('p-'+n).classList.add('active');
+  if(n==='dashboard')rd();
+}
+function addChip(txt){
+  const el=document.getElementById('custom-req');
+  el.value=(el.value.trim()?(el.value.trim()+' '):'')+txt+'.';
+}
+
+/* --- File handling --- */
+function onDragOver(e){e.preventDefault();document.getElementById('drop-zone').classList.add('drag');}
+function onDragLeave(e){document.getElementById('drop-zone').classList.remove('drag');}
+function onDrop(e){e.preventDefault();document.getElementById('drop-zone').classList.remove('drag');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);}
+
+function handleFile(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  document.getElementById('file-name-label').textContent=file.name;
+  document.getElementById('file-size-label').textContent=formatBytes(file.size);
+  document.getElementById('file-info').classList.add('show');
+  parsedFileData=null;
+
+  if(ext==='csv'||ext==='txt'||ext==='md'){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const text=e.target.result;
+      parsedFileData=text;
+      if(ext==='csv'){renderCSVPreview(text);}
+      else{document.getElementById('preview-table-section').style.display='none';document.getElementById('inp').value=text.slice(0,2000)+(text.length>2000?'\n... (truncated for display)':'');}
+    };
+    reader.readAsText(file);
+  } else if(ext==='xlsx'||ext==='xls'){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const data=XLSX.utils.sheet_to_json(ws,{header:1});
+      parsedFileData=data.map(r=>r.join('\t')).join('\n');
+      renderTablePreview(data);
+    };
+    reader.readAsArrayBuffer(file);
+  } else if(ext==='json'){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const obj=JSON.parse(e.target.result);
+        parsedFileData=JSON.stringify(obj,null,2).slice(0,3000);
+        document.getElementById('preview-table-section').style.display='none';
+        document.getElementById('inp').value=parsedFileData;
+      }catch(err){alert('Invalid JSON file.');}
+    };
+    reader.readAsText(file);
+  } else {
+    alert('Unsupported file format. Please use CSV, Excel, JSON, or TXT.');
+    clearFile();
+  }
+}
+
+function renderCSVPreview(text){
+  const rows=text.trim().split('\n').slice(0,6).map(r=>r.split(','));
+  renderTablePreview(rows,text.trim().split('\n').length);
+}
+
+function renderTablePreview(rows,totalRows){
+  if(!rows||rows.length===0)return;
+  const total=totalRows||rows.length;
+  document.getElementById('data-count').textContent=(total-1)+' rows detected — showing first 5';
+  const headers=rows[0];
+  const dataRows=rows.slice(1,6);
+  let html='<table class="preview-tbl"><thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>';
+  dataRows.forEach(r=>{html+='<tr>'+headers.map((_,i)=>'<td>'+(r[i]||'')+'</td>').join('')+'</tr>';});
+  html+='</tbody></table>';
+  document.getElementById('preview-table-wrap').innerHTML=html;
+  document.getElementById('preview-table-section').style.display='block';
+}
+
+function clearFile(){
+  parsedFileData=null;
+  document.getElementById('file-input').value='';
+  document.getElementById('file-info').classList.remove('show');
+  document.getElementById('preview-table-section').style.display='none';
+  document.getElementById('file-name-label').textContent='—';
+}
+
+function formatBytes(b){if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
+
+/* --- Generate --- */
+async function gen(){
+  const manualText=document.getElementById('inp').value.trim();
+  const inputData=parsedFileData||manualText;
+  if(!inputData){document.getElementById('gstat').textContent='Please upload a file or enter requirements.';return;}
+  const types=[document.getElementById('c1').checked&&'functional',document.getElementById('c2').checked&&'edge case',document.getElementById('c3').checked&&'negative',document.getElementById('c4').checked&&'integration',document.getElementById('c5').checked&&'performance'].filter(Boolean);
+  const customReq=document.getElementById('custom-req').value.trim();
+  const btn=document.getElementById('gbtn');btn.disabled=true;btn.textContent='Generating...';
+  document.getElementById('loader').classList.add('show');
+  document.getElementById('gstat').textContent='Analyzing with Claude...';
+  const customSection=customReq?'\n\nAdditional custom requirements from the user (follow these strictly):\n'+customReq:'';
+  const prompt='You are a senior QA engineer. Analyze the following requirements or dataset and generate test cases.\n\nInput data:\n'+inputData.slice(0,4000)+customSection+'\n\nGenerate 8-18 test cases for types: '+types.join(', ')+'.\nRespond ONLY with a valid JSON array, no markdown. Each object:\n{"id":"TC-001","title":"...","type":"functional|edge case|negative|integration|performance","priority":"high|medium|low","requirement":"short label","steps":["step1","step2","step3"],"expected":"expected result","status":"pending"}';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const raw=data.content.map(c=>c.text||'').join('');
+    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    tests=[...tests,...parsed];
+    document.getElementById('rc').textContent=tests.length;
+    document.getElementById('gstat').textContent='✓ '+parsed.length+' test cases generated';
+    switchTab('results');renderTests();
+  }catch(e){document.getElementById('gstat').textContent='Error: '+e.message;}
+  btn.disabled=false;btn.textContent='Generate test cases';
+  document.getElementById('loader').classList.remove('show');
+}
+
+function renderTests(){
+  const empty=document.getElementById('empty-r'),cont=document.getElementById('results-c');
+  if(!tests.length){empty.style.display='block';cont.style.display='none';return;}
+  empty.style.display='none';cont.style.display='block';
+  let shown=tests.filter(t=>flt==='all'||t.type===flt||(flt==='edge'&&t.type==='edge case'));
+  if(q)shown=shown.filter(t=>t.title.toLowerCase().includes(q)||(t.requirement||'').toLowerCase().includes(q));
+  document.getElementById('tlist').innerHTML=shown.map(t=>{
+    const ri=tests.indexOf(t);
+    const tc='type-'+(t.type==='edge case'?'edge':t.type);
+    return `<div class="tc"><div class="tc-header"><span class="tc-id">${t.id}</span><span class="tc-title">${t.title}</span><span class="tc-type ${tc}">${t.type}</span></div>
+    <div class="tc-meta"><span class="pri-${t.priority}">● ${t.priority}</span><span style="font-size:12px;color:#999;">${t.requirement||''}</span><span class="status-badge status-${t.status||'pending'}">${t.status||'pending'}</span>
+    <button onclick="cs(${ri})" style="margin-left:auto;font-size:12px;padding:4px 10px;">Update status</button>
+    <button onclick="tb(${ri})" style="font-size:12px;padding:4px 10px;">Details</button></div>
+    <div class="tc-body" id="b${ri}"><div class="tc-lbl" style="margin-top:8px;">Steps</div><ol class="steps">${(t.steps||[]).map(s=>`<li>${s}</li>`).join('')}</ol><div class="tc-lbl" style="margin-top:8px;">Expected result</div><div class="expected">${t.expected}</div></div></div>`;
+  }).join('');
+}
+function tb(i){document.getElementById('b'+i).classList.toggle('open');}
+function cs(i){const o=['pending','pass','fail'];tests[i].status=o[(o.indexOf(tests[i].status||'pending')+1)%3];renderTests();rd();}
+function ft(t,el){flt=t;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderTests();}
+function sr(v){q=v;renderTests();}
+function markAll(s){tests.forEach(t=>t.status=s);renderTests();rd();}
+function clearAll(){tests=[];parsedFileData=null;clearFile();document.getElementById('inp').value='';document.getElementById('rc').textContent='0';document.getElementById('gstat').textContent='';renderTests();rd();}
+function exportCSV(){if(!tests.length)return;const h=['ID','Title','Type','Priority','Requirement','Steps','Expected','Status'];const r=tests.map(t=>[t.id,t.title,t.type,t.priority,t.requirement||'',(t.steps||[]).join(' | '),t.expected,t.status||'pending'].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent([h.join(','),...r].join('\n'));a.download='test_cases.csv';a.click();}
+function exportJSON(){if(!tests.length)return;const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(tests,null,2));a.download='test_cases.json';a.click();}
+function rd(){
+  const empty=document.getElementById('empty-d'),cont=document.getElementById('dash-c');
+  if(!tests.length){empty.style.display='block';cont.style.display='none';return;}
+  empty.style.display='none';cont.style.display='block';
+  const total=tests.length,pass=tests.filter(t=>t.status==='pass').length,fail=tests.filter(t=>t.status==='fail').length;
+  document.getElementById('d-tot').textContent=total;
+  document.getElementById('d-pass').textContent=pass;
+  document.getElementById('d-fail').textContent=fail;
+  document.getElementById('d-cov').textContent=Math.min(100,Math.round(total/5*18+(pass/Math.max(total,1))*22))+'%';
+  const tc={},colors={functional:'#378ADD','edge case':'#BA7517',negative:'#E24B4A',integration:'#1D9E75',performance:'#7F77DD'};
+  tests.forEach(t=>{tc[t.type]=(tc[t.type]||0)+1;});
+  document.getElementById('type-chart').innerHTML=Object.entries(tc).map(([tp,cnt])=>`<div class="bar-row"><span class="bar-lbl">${tp}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/total*100)}%;background:${colors[tp]||'#888'};"></div></div><span style="font-size:12px;color:#999;width:24px;text-align:right;">${cnt}</span></div>`).join('');
+  const pc={};tests.forEach(t=>{pc[t.priority]=(pc[t.priority]||0)+1;});
+  const pcol={high:'#E24B4A',medium:'#BA7517',low:'#639922'};
+  document.getElementById('pri-chart').innerHTML=['high','medium','low'].filter(p=>pc[p]).map(p=>`<div class="bar-row"><span class="bar-lbl">${p}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(pc[p]/total*100)}%;background:${pcol[p]};"></div></div><span style="font-size:12px;color:#999;width:24px;text-align:right;">${pc[p]}</span></div>`).join('');
+  const reqs={};tests.forEach(t=>{const r=t.requirement||'Untagged';reqs[r]=(reqs[r]||0)+1;});
+  document.getElementById('cov-map').innerHTML=Object.entries(reqs).map(([r,cnt])=>`<div class="cov-pill" style="background:rgba(55,138,221,${0.1+Math.min(cnt/4,1)*0.45});border:1px solid rgba(55,138,221,${0.2+Math.min(cnt/4,1)*0.4});color:var(--text);">${r} <strong>${cnt}</strong></div>`).join('');
+}
+</script>
+</body>
+</html>
